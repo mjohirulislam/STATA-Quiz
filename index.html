@@ -449,6 +449,50 @@
                 { q: "If you want to create a squared term in regression without generating a new variable?", options: ["age^2", "c.age#c.age", "sq(age)", "age*age"], a: 1, exp: "<span class='code'>c.age#c.age</span> creates a squared term on the fly." }
             ]
         }
+        // TEST 12: CAUSAL INFERENCE & ADVANCED MODELS
+        {
+            id: 12,
+            title: "Test 12: Causal Inference (RDD, DiD, PSM)",
+            questions: [
+                { q: "Which command is used for Propensity Score Matching?", options: ["psmatch", "teffects psmatch", "match_score", "propensity"], a: 1, exp: "<span class='code'>teffects psmatch</span> estimates treatment effects using propensity-score matching[cite: 125]." },
+                { q: "What is the modern Stata command for Difference-in-Differences?", options: ["didregress", "diff", "did", "xtdid"], a: 0, exp: "<span class='code'>didregress</span> fits difference-in-differences models." },
+                { q: "Which command is used for Regression Discontinuity Design?", options: ["rdd", "rdrobust", "discont", "regdisc"], a: 1, exp: "<span class='code'>rdrobust</span> (user-written) or <span class='code'>rd</span> are standard for RDD." },
+                { q: "Command for the Synthetic Control Method?", options: ["synth", "synthetic", "control", "simulated"], a: 0, exp: "<span class='code'>synth</span> (user-written) implements the synthetic control estimator." },
+                { q: "What does <span class='code'>heckman</span> estimate?", options: ["Selection bias correction", "Heteroskedasticity", "Autocorrelation", "Time series"], a: 0, exp: "Fits the Heckman selection model to correct for sample selection bias." },
+                { q: "Which command runs Instrumental Variable (IV) regression?", options: ["ivregress", "instreg", "2sls", "ivreg"], a: 0, exp: "<span class='code'>ivregress 2sls</span> is the standard built-in command." },
+                { q: "In DiD, what assumption is tested using <span class='code'>estat trendplots</span>?", options: ["Normality", "Parallel Trends", "Homoskedasticity", "Linearity"], a: 1, exp: "It visually checks the Parallel Trends assumption." },
+                { q: "What is the 'forcing variable' in RDD?", options: ["The outcome", "The treatment", "The variable determining the cutoff", "The error term"], a: 2, exp: "The running (forcing) variable determines assignment based on a cutoff." },
+                { q: "What does <span class='code'>psmatch2</span> (user-written) do?", options: ["DiD", "PSM", "IV", "RDD"], a: 1, exp: "It is a popular older command for Propensity Score Matching." },
+                { q: "In IV regression, what must the instrument satisfy?", options: ["Correlated with Y, not X", "Correlated with X, uncorrelated with error (Exclusion Restriction)", "Uncorrelated with everything", "Constant"], a: 1, exp: "Relevance (corr with X) and Exclusion (uncorr with error)." },
+                { q: "What does <span class='code'>teffects nnmatch</span> do?", options: ["Neural Network", "Nearest-Neighbor Matching", "Null Hypothesis", "None"], a: 1, exp: "Nearest-neighbor matching estimator[cite: 125]." },
+                { q: "Which post-estimation command tests for weak instruments?", options: ["estat firststage", "estat weak", "test weak", "ivtest"], a: 0, exp: "Reports diagnostics like F-stats to check instrument strength." },
+                { q: "Command for Quantile Regression?", options: ["qreg", "quantreg", "reg_q", "percentile"], a: 0, exp: "<span class='code'>qreg</span> estimates quantile regression models." },
+                { q: "What does <span class='code'>etregress</span> do?", options: ["Endogenous Treatment Regression", "Excel Regression", "Error Term Regression", "None"], a: 0, exp: "Estimates an endogenous treatment-effects model (Linear regression with endogenous treatment)." },
+                { q: "Command for Seemingly Unrelated Regression?", options: ["sureg", "unrel", "seeming", "sur"], a: 0, exp: "<span class='code'>sureg</span> fits seemingly unrelated regression models." }
+            ]
+        }
+        // TEST 13: COUNT DATA, TOBIT & SEM (The Final Missing Pieces)
+        {
+            id: 13,
+            title: "Test 13: Count & Limited Dependent Variables",
+            questions: [
+                { q: "Which command fits a Poisson regression for count data?", options: ["regress", "poisson", "countreg", "logreg"], a: 1, exp: "<span class='code'>poisson</span> fits models for count outcomes (0, 1, 2...)." },
+                { q: "If your count data has over-dispersion (Variance > Mean), which command is better than poisson?", options: ["nbreg", "logit", "tobit", "regress"], a: 0, exp: "<span class='code'>nbreg</span> (Negative Binomial Regression) handles over-dispersion." },
+                { q: "Which command handles censored data (e.g., top-coded income)?", options: ["censreg", "tobit", "trunc", "cutreg"], a: 1, exp: "<span class='code'>tobit</span> estimates models with censored dependent variables." },
+                { q: "What does the option <span class='code'>irr</span> report in Poisson models?", options: ["Internal Rate of Return", "Incidence Rate Ratios", "Inverse Regression", "None"], a: 1, exp: "Reports coefficients as Incidence Rate Ratios instead of logs." },
+                { q: "Command for Structural Equation Modeling?", options: ["sem", "struct", "eq", "path"], a: 0, exp: "<span class='code'>sem</span> fits structural equation models." },
+                { q: "Command for Zero-Inflated Poisson (excess zeros)?", options: ["zip", "zero_poisson", "zpoisson", "pois0"], a: 0, exp: "<span class='code'>zip</span> fits zero-inflated poisson models." },
+                { q: "What does <span class='code'>gmm</span> stand for?", options: ["General Mixed Model", "Generalized Method of Moments", "Grand Mean Method", "Global Max Model"], a: 1, exp: "Generalized Method of Moments." },
+                { q: "How do you test if a variable has a non-linear effect (e.g. U-shape)?", options: ["Add a squared term (c.age#c.age)", "Use logit", "Use robust", "Use cluster"], a: 0, exp: "Adding a quadratic term tests for non-linear shapes." },
+                { q: "What does <span class='code'>constraint define</span> do?", options: ["Limits sample size", "Defines constraints on coefficients (e.g., x1 = x2)", "Drops variables", "None"], a: 1, exp: "Sets linear constraints on coefficients for estimation." },
+                { q: "Command for Multivariate Regression (multiple dependent variables)?", options: ["rege", "mvreg", "multi", "polyreg"], a: 1, exp: "<span class='code'>mvreg</span> fits multivariate regression models." },
+                { q: "Which test checks if Poisson is appropriate vs. Negative Binomial?", options: ["estat gof", "lrtest alpha", "test mean", "check var"], a: 1, exp: "Likelihood-ratio test of alpha=0 (reported automatically in nbreg)." },
+                { q: "What is <span class='code'>sureg</span>?", options: ["Survey Regression", "Seemingly Unrelated Regression", "Sure Regression", "None"], a: 1, exp: "Fits models with correlated errors across different equations." },
+                { q: "How do you calculate the AIC/BIC for model comparison?", options: ["estat ic", "estat info", "check fit", "model fit"], a: 0, exp: "<span class='code'>estat ic</span> displays Information Criteria." },
+                { q: "What does <span class='code'>margins, at(age=(20(10)60))</span> do?", options: ["Sets age to 20", "Predicts outcomes at age 20, 30, 40, 50, 60", "Filters data", "Errors"], a: 1, exp: "Calculates predicted margins at specific representative values." },
+                { q: "Which command performs the Ramsey RESET test for omitted variables?", options: ["estat ovtest", "test reset", "check vars", "ovtest"], a: 0, exp: "<span class='code'>estat ovtest</span> (or <span class='code'>ovtest</span>) tests for model specification errors." }
+            ]
+        }
     ];
 
     // --- LOGIC ---
