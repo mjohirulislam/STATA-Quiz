@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stata Master Quiz App</title>
+    <style>
+        :root {
+            --primary: #1a5f7a;
+            --secondary: #1591ea;
+            --success: #28a745;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: var(--dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        h1, h2 { color: var(--primary); text-align: center; }
+        
+        .code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #eee;
+            padding: 2px 5px;
+            border-radius: 4px;
+            color: #d63384;
+            font-weight: bold;
+        }
+
+        /* Menu Screen */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .test-btn {
+            background-color: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .test-btn:hover {
+            background-color: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Quiz Screen */
+        .quiz-section { display: none; }
+        
+        .question-card {
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .option-label:hover { background-color: #f8f9fa; }
+        .option-label input { margin-right: 15px; }
+
+        /* Results Screen */
+        .results-section { display: none; }
+        
+        .score-box {
+            background: var(--light);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            margin-bottom: 30px;
+            border: 2px solid var(--primary);
+        }
+
+        .score-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .review-card {
+            background: #fff;
+            border: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: var(--border-radius);
+        }
+
+        .review-card.correct { border-left: 5px solid var(--success); }
+        .review-card.incorrect { border-left: 5px solid var(--danger); }
+
+        .explanation {
+            background-color: #eef5f9;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            font-size: 0.95rem;
+            color: #555;
+        }
+
+        /* Navigation Buttons */
+        .nav-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 20px;
+            display: block;
+            width: 100%;
+        }
+
+        .nav-btn:hover { background-color: var(--secondary); }
+        
+        .back-btn {
+            background: transparent;
+            color: #666;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="menu-screen">
+        <h1>Stata Mastery Quiz</h1>
+        <p style="text-align: center;">Select a test to begin. Each test contains 15 questions covering concepts from the Cheat Sheet.</p>
+        <div class="menu-grid" id="test-grid">
+            </div>
+    </div>
+
+    <div id="quiz-screen" class="quiz-section">
+        <button class="back-btn" onclick="goHome()">← Back to Menu</button>
+        <h2 id="quiz-title">Test 1</h2>
+        <div id="questions-container">
+            </div>
+        <button class="nav-btn" onclick="submitQuiz()">Submit Answers</button>
+    </div>
+
+    <div id="results-screen" class="results-section">
+        <h2>Quiz Results</h2>
+        <div class="score-box">
+            <div>Your Score</div>
+            <div class="score-number" id="final-score">0 / 15</div>
+            <div id="score-percent">0%</div>
+        </div>
+        <h3>Review Answers</h3>
+        <div id="review-container">
+            </div>
+        <button class="nav-btn" onclick="goHome()">Take Another Test</button>
+    </div>
+</div>
+
+<script>
+    // --- DATA SOURCE: 150 QUESTIONS (10 Tests x 15 Questions) ---
+    // Sourced directly from the provided Cheat Sheet PDF context
+    
+    const quizData = [
+        // TEST 1: BASICS & SETUP
+        {
+            id: 1,
+            title: "Test 1: Setup & Data Import",
+            questions: [
+                { q: "Which command removes all data currently in memory?", options: ["delete all", "clear", "drop _all", "erase"], a: 1, exp: "The <span class='code'>clear</span> command removes the dataset currently in memory." },
+                { q: "How do you install a user-written package named 'outreg2'?", options: ["install outreg2", "ssc install outreg2", "get package outreg2", "net get outreg2"], a: 1, exp: "The <span class='code'>ssc install</span> command downloads packages from the Statistical Software Components archive." },
+                { q: "What does the <span class='code'>cd</span> command do?", options: ["Count Data", "Change Directory", "Create Database", "Clear Data"], a: 1, exp: "<span class='code'>cd</span> stands for Change Directory. It sets the working folder." },
+                { q: "Which command loads a dataset named 'auto.dta'?", options: ["load auto.dta", "read auto.dta", "use auto.dta", "open auto.dta"], a: 2, exp: "The <span class='code'>use</span> command loads Stata (.dta) files." },
+                { q: "If you import an Excel file, which option uses the first row as variable names?", options: ["header", "names", "firstrow", "top"], a: 2, exp: "The <span class='code'>firstrow</span> option tells Stata to treat the top row as variable names." },
+                { q: "What does <span class='code'>sysuse auto</span> do?", options: ["Loads a system file named 'auto'", "Saves the file as 'auto'", "Deletes the 'auto' file", "Renames the file to 'auto'"], a: 0, exp: "<span class='code'>sysuse</span> loads example datasets installed with Stata." },
+                { q: "How do you stop a command from running (break)?", options: ["Ctrl + C", "Ctrl + Break", "Ctrl + Q", "Esc"], a: 1, exp: "In Stata, the 'Break' button or Ctrl + Break stops execution." },
+                { q: "Which shortcut opens the Data Editor?", options: ["ctrl+8", "ctrl+9", "ctrl+1", "ctrl+E"], a: 0, exp: "Ctrl + 8 opens the Data Editor (Browse mode)." },
+                { q: "Which shortcut opens a new Do-file?", options: ["ctrl+N", "ctrl+9", "ctrl+D", "ctrl+O"], a: 1, exp: "Ctrl + 9 opens a new Do-file editor window." },
+                { q: "What does <span class='code'>pwd</span> stand for?", options: ["Print Working Directory", "Password", "Previous Working Data", "Path to Web Data"], a: 0, exp: "<span class='code'>pwd</span> displays the current working directory path." },
+                { q: "How do you view the structure (metadata) of a dataset without listing data?", options: ["list", "browse", "describe", "summarize"], a: 2, exp: "<span class='code'>describe</span> shows variable names, types, and labels." },
+                { q: "Which command displays a history of previous commands?", options: ["#review", "history", "log", "past"], a: 0, exp: "The Review window shows history, but <span class='code'>#review</span> (or scrolling PgUp) accesses it." },
+                { q: "What does <span class='code'>set more off</span> do?", options: ["Turns off the 'more' pause for long output", "Deletes extra variables", "Stops the log file", "Closes Stata"], a: 0, exp: "It prevents Stata from pausing and waiting for you to press 'more' during long outputs." },
+                { q: "How do you start a log file named 'mylog'?", options: ["start log mylog", "log using mylog", "create log mylog", "open log mylog"], a: 1, exp: "<span class='code'>log using filename</span> initiates the logging of output." },
+                { q: "Which file extension represents a Stata dataset?", options: [".do", ".dta", ".log", ".stata"], a: 1, exp: "Stata data files end in <span class='code'>.dta</span>." }
+            ]
+        },
+        // TEST 2: DATA EXPLORATION
+        {
+            id: 2,
+            title: "Test 2: Data Exploration",
+            questions: [
+                { q: "Which command gives mean, standard deviation, min, and max?", options: ["tabulate", "describe", "summarize", "mean"], a: 2, exp: "<span class='code'>summarize</span> provides descriptive statistics." },
+                { q: "How do you get detailed statistics like skewness and percentiles?", options: ["summarize, detailed", "summarize, full", "summarize, detail", "summ, all"], a: 2, exp: "The <span class='code'>detail</span> option (or <span class='code'>d</span>) adds percentiles, skewness, and kurtosis." },
+                { q: "Which command creates a one-way frequency table?", options: ["freq", "tabulate", "count", "list"], a: 1, exp: "<span class='code'>tabulate</span> (or <span class='code'>tab</span>) creates frequency tables." },
+                { q: "What does <span class='code'>codebook</span> do?", options: ["Writes a do-file", "Summarizes variable types, missing values, and unique values", "Encrypts the data", "Lists all variable names"], a: 1, exp: "<span class='code'>codebook</span> provides a detailed dictionary-like summary of variables." },
+                { q: "Which command checks if a variable uniquely identifies observations?", options: ["unique", "checkid", "isid", "id var"], a: 2, exp: "<span class='code'>isid</span> verifies that the specified variables uniquely identify observations." },
+                { q: "How do you see a simple histogram of a variable in the text output?", options: ["graph", "plot", "inspect", "view"], a: 2, exp: "<span class='code'>inspect</span> provides a rough text-based histogram and missing value count." },
+                { q: "Which command lists the first 10 observations?", options: ["list in 1/10", "show 10", "head 10", "browse 10"], a: 0, exp: "<span class='code'>list in 1/10</span> displays the first 10 rows." },
+                { q: "What does <span class='code'>count if price > 5000</span> do?", options: ["Deletes rows where price > 5000", "Displays the number of rows where price > 5000", "Creates a variable counting price", "Errors out"], a: 1, exp: "<span class='code'>count</span> returns the number of observations satisfying the condition." },
+                { q: "What does <span class='code'>misstable summarize</span> do?", options: ["Deletes missing values", "Reports the pattern of missing values", "Fills missing values", "Summarizes only non-missing data"], a: 1, exp: "It reports missing value patterns." },
+                { q: "How do you sort data by the variable 'age'?", options: ["order age", "arrange age", "sort age", "group age"], a: 2, exp: "<span class='code'>sort</span> arranges observations in ascending order." },
+                { q: "How do you sort 'age' in descending order?", options: ["sort age, desc", "gsort -age", "sort -age", "reverse age"], a: 1, exp: "<span class='code'>gsort -varname</span> sorts in descending order." },
+                { q: "Which command finds duplicate observations?", options: ["duplicates report", "find duplicates", "check dup", "isdup"], a: 0, exp: "<span class='code'>duplicates report</span> summarizes duplicate records." },
+                { q: "What command displays the correlations between variables?", options: ["correlate", "relation", "connect", "link"], a: 0, exp: "<span class='code'>correlate</span> (or <span class='code'>corr</span>) displays the correlation matrix." },
+                { q: "How do you list all unique values of a variable?", options: ["tabulate", "levelsof", "unique", "values"], a: 1, exp: "<span class='code'>levelsof</span> displays a sorted list of distinct values." },
+                { q: "What does <span class='code'>assert price > 0</span> do?", options: ["Sets price to 0", "Checks if price is > 0 for all rows; errors if false", "Drops rows where price <= 0", "Lists prices > 0"], a: 1, exp: "<span class='code'>assert</span> verifies a claim about the data." }
+            ]
+        },
+        // TEST 3: DATA MANIPULATION
+        {
+            id: 3,
+            title: "Test 3: Data Manipulation",
+            questions: [
+                { q: "Which command creates a NEW variable?", options: ["make", "generate", "create", "new"], a: 1, exp: "<span class='code'>generate</span> (or <span class='code'>gen</span>) creates new variables." },
+                { q: "Which command modifies an EXISTING variable?", options: ["change", "modify", "replace", "update"], a: 2, exp: "<span class='code'>replace</span> modifies existing variables." },
+                { q: "How do you delete a variable named 'temp'?", options: ["delete temp", "remove temp", "drop temp", "erase temp"], a: 2, exp: "<span class='code'>drop varname</span> removes the variable." },
+                { q: "How do you keep ONLY the variable 'id'?", options: ["save id", "keep id", "drop all except id", "hold id"], a: 1, exp: "<span class='code'>keep varname</span> deletes everything else." },
+                { q: "What is the symbol for 'Not Equal' in Stata?", options: ["<>", "!= or ~=", "=/=", "not="], a: 1, exp: "Stata uses <span class='code'>!=</span> or <span class='code'>~=</span> for inequality." },
+                { q: "What command changes a variable's name?", options: ["rename", "name", "call", "retitle"], a: 0, exp: "<span class='code'>rename oldname newname</span>." },
+                { q: "What does <span class='code'>recode</span> do?", options: ["Records a macro", "Changes values of a variable based on rules", "Repeats code", "Reloads data"], a: 1, exp: "<span class='code'>recode</span> changes values (e.g., 1=0, 2=1)." },
+                { q: "How do you convert a string variable to numeric?", options: ["tovalue", "destring", "real", "encode"], a: 1, exp: "<span class='code'>destring</span> converts string variables that contain numbers into numeric variables." },
+                { q: "How do you convert categorical text (e.g., 'Male') to labeled numbers?", options: ["destring", "encode", "cat", "label"], a: 1, exp: "<span class='code'>encode</span> creates a numeric variable with value labels from strings." },
+                { q: "What variable represents the observation number?", options: ["_N", "_n", "_obs", "_id"], a: 1, exp: "<span class='code'>_n</span> is the current observation number." },
+                { q: "What variable represents the TOTAL number of observations?", options: ["_N", "_n", "_total", "_max"], a: 0, exp: "<span class='code'>_N</span> is the total count of observations." },
+                { q: "Which command calculates summary stats (like mean) by group and saves a new dataset?", options: ["summary", "collapse", "compress", "contract"], a: 1, exp: "<span class='code'>collapse</span> converts the dataset into a dataset of means, sums, etc." },
+                { q: "What does <span class='code'>egen x = mean(price)</span> do?", options: ["Shows the mean of price", "Creates a constant variable x equal to the mean", "Errors out", "Graphs the mean"], a: 1, exp: "<span class='code'>egen</span> (extended generate) allows functions like mean()." },
+                { q: "How do you reshape Wide data to Long data?", options: ["reshape long", "reshape wide", "transpose", "flip"], a: 0, exp: "<span class='code'>reshape long</span> converts columns into rows." },
+                { q: "Which command fills missing values forward?", options: ["carryforward", "fill", "replace", "update"], a: 0, exp: "<span class='code'>carryforward</span> (user-written) or <span class='code'>replace x = x[_n-1] if missing(x)</span>." }
+            ]
+        },
+        // TEST 4: COMBINING DATA
+        {
+            id: 4,
+            title: "Test 4: Combining Data",
+            questions: [
+                { q: "Which command stacks datasets vertically (adding rows)?", options: ["merge", "join", "append", "stack"], a: 2, exp: "<span class='code'>append</span> adds new observations to the bottom." },
+                { q: "Which command joins datasets horizontally (adding columns) using a key?", options: ["merge", "append", "combine", "connect"], a: 0, exp: "<span class='code'>merge</span> joins datasets based on a common identifier." },
+                { q: "In a 1:1 merge, what does '1:1' mean?", options: ["One file to one file", "One variable to one variable", "One observation in master matches one in using", "First merge attempt"], a: 2, exp: "It means unique identifiers in both datasets." },
+                { q: "What is the result variable created by <span class='code'>merge</span>?", options: ["_merge", "_status", "_match", "_result"], a: 0, exp: "<span class='code'>_merge</span> indicates the source (1=master only, 2=using only, 3=matched)." },
+                { q: "Which merge type is used when many rows in 'using' match one row in 'master'?", options: ["1:1", "1:m", "m:1", "m:m"], a: 1, exp: "This is a <span class='code'>1:m</span> (One-to-Many) merge." },
+                { q: "What option do you use to force a string merge even if formats differ?", options: ["force", "string", "nostop", "replace"], a: 0, exp: "Not typically recommended, but often refers to destring/encode; in append, <span class='code'>force</span> allows type mismatches." },
+                { q: "What is a 'fuzzy match'?", options: ["Matching based on exact IDs", "Matching based on similarity (e.g., probability)", "Matching random rows", "Matching without saving"], a: 1, exp: "Fuzzy matching (e.g., <span class='code'>reclink</span>) matches non-exact strings." },
+                { q: "What does <span class='code'>joinby</span> do?", options: ["Creates all pairwise combinations", "Same as merge", "Same as append", "Joins strings"], a: 0, exp: "<span class='code'>joinby</span> forms all pairwise combinations within groups." },
+                { q: "Before merging, datasets must be...", options: ["Opened", "Sorted by the key variable", "Renamed", "Deleted"], a: 1, exp: "Ideally sorted, though modern Stata sorts automatically." },
+                { q: "If <span class='code'>_merge == 3</span>, what does it mean?", options: ["Master only", "Using only", "Matched in both", "Error"], a: 2, exp: "3 indicates the observation was found in both datasets." },
+                { q: "What does <span class='code'>cross</span> do?", options: ["Cross-tabulates", "Forms every pairwise combination of two datasets", "Deletes non-matches", "None of the above"], a: 1, exp: "<span class='code'>cross</span> forms the Cartesian product." },
+                { q: "To add variables from a lookup table to your main data, use...", options: ["append", "merge m:1", "merge 1:m", "join"], a: 1, exp: "Lookup tables usually have unique IDs, so it is a <span class='code'>m:1</span> merge." },
+                { q: "What happens to variables with the same name in <span class='code'>merge</span> (not the key)?", options: ["Using overwrites Master", "Master keeps value, Using is ignored", "Stata renames them", "Error occurs"], a: 1, exp: "By default, the Master data takes precedence." },
+                { q: "Which command transposes rows and columns?", options: ["reshape", "xpose", "flip", "invert"], a: 1, exp: "<span class='code'>xpose</span> transposes the data." },
+                { q: "How do you append only specific variables?", options: ["append using file, keep(vars)", "append using file, vars(vars)", "append using file (vars)", "Cannot be done"], a: 0, exp: "Use the <span class='code'>keep()</span> option within append." }
+            ]
+        },
+        // TEST 5: STATISTICS & ANALYSIS
+        {
+            id: 5,
+            title: "Test 5: Statistical Analysis",
+            questions: [
+                { q: "Command for Ordinary Least Squares (OLS) regression?", options: ["ols", "regress", "fit", "lm"], a: 1, exp: "<span class='code'>regress</span> (or <span class='code'>reg</span>) performs OLS." },
+                { q: "How do you request Robust Standard Errors?", options: ["reg y x, robust", "reg y x, rse", "reg y x, std(rob)", "reg y x, vce(robust)"], a: 3, exp: "<span class='code'>vce(robust)</span> or simply <span class='code'>robust</span>." },
+                { q: "Command for Logistic Regression?", options: ["logistic", "logit", "both", "neither"], a: 2, exp: "Both <span class='code'>logit</span> (coeffs) and <span class='code'>logistic</span> (odds ratios) work." },
+                { q: "How do you test if a coefficient equals 0 after regression?", options: ["check var=0", "test var=0", "verify var", "ttest var"], a: 1, exp: "<span class='code'>test</span> performs a Wald test of linear hypotheses." },
+                { q: "Which command calculates predicted values after regression?", options: ["predict", "calc", "forecast", "gen_pred"], a: 0, exp: "<span class='code'>predict</span> creates new variables (fitted values, residuals, etc.) from the model." },
+                { q: "How do you get residuals?", options: ["predict r, resid", "predict r, error", "get resid", "resid r"], a: 0, exp: "<span class='code'>predict varname, residuals</span>." },
+                { q: "What does <span class='code'>tabulate x, chi2</span> do?", options: ["Frequency table only", "Chi-square test of independence", "Correlation", "Regression"], a: 1, exp: "It performs a Chi-square test." },
+                { q: "How do you run a t-test for difference in means by group?", options: ["ttest var, by(group)", "ttest var group", "diff var group", "test var group"], a: 0, exp: "<span class='code'>ttest var, by(group)</span>." },
+                { q: "Which command gives the Variance Inflation Factor?", options: ["vif", "collin", "het", "inflation"], a: 0, exp: "<span class='code'>vif</span> checks for multicollinearity." },
+                { q: "Command to test for Heteroskedasticity?", options: ["hettest", "estat hettest", "test het", "check het"], a: 1, exp: "<span class='code'>estat hettest</span> (Breusch-Pagan)." },
+                { q: "What does <span class='code'>margins, dydx(*)</span> do?", options: ["Plots margins", "Calculates marginal effects", "Calculates totals", "Standardizes"], a: 1, exp: "Calculates the marginal effect of variables." },
+                { q: "Command for ANOVA?", options: ["anova", "aov", "variance", "oneway"], a: 0, exp: "<span class='code'>anova</span> performs analysis of variance." },
+                { q: "What does <span class='code'>pwcorr var1 var2, sig</span> do?", options: ["Correlation with significance level", "Simple correlation", "Plot correlation", "None"], a: 0, exp: "Shows the significance (p-values) of correlations." },
+                { q: "Command for Probit regression?", options: ["prob", "probit", "pr", "p-reg"], a: 1, exp: "<span class='code'>probit</span>." },
+                { q: "How do you store estimation results?", options: ["save est", "estimates store name", "keep est", "record name"], a: 1, exp: "<span class='code'>estimates store</span> saves results in memory." }
+            ]
+        },
+        // TEST 6: GRAPHS & VISUALIZATION
+        {
+            id: 6,
+            title: "Test 6: Graphs & Visualization",
+            questions: [
+                { q: "Basic command for a scatterplot?", options: ["plot y x", "scatter y x", "graph y x", "dot y x"], a: 1, exp: "<span class='code'>scatter</span> or <span class='code'>twoway scatter</span>." },
+                { q: "Command for a histogram?", options: ["hist", "histogram", "bar", "freq"], a: 1, exp: "<span class='code'>histogram</span>." },
+                { q: "How do you add a title to a graph?", options: ["label(Title)", "title(text)", "header(text)", "name(text)"], a: 1, exp: "Use the <span class='code'>title()</span> option." },
+                { q: "How do you save a graph to disk?", options: ["graph save", "graph export", "save graph", "keep graph"], a: 1, exp: "<span class='code'>graph export filename.png</span> (or .pdf, .gph)." },
+                { q: "What does <span class='code'>graph combine</span> do?", options: ["Merges datasets", "Combines variables", "Displays multiple graphs in one image", "Overlays lines"], a: 2, exp: "It combines saved graph files into one figure." },
+                { q: "How do you produce separate graphs for each group?", options: ["group(var)", "by(var)", "split(var)", "separate(var)"], a: 1, exp: "The <span class='code'>by()</span> option creates faceted graphs." },
+                { q: "Command for a Box Plot?", options: ["graph box", "boxplot", "box", "whisker"], a: 0, exp: "<span class='code'>graph box</span>." },
+                { q: "How do you overlay a regression line on a scatter plot?", options: ["scatter y x, line", "twoway (scatter y x) (lfit y x)", "add line", "regress plot"], a: 1, exp: "<span class='code'>lfit</span> generates a linear fit line." },
+                { q: "What does the <span class='code'>scheme()</span> option do?", options: ["Changes the data schema", "Changes the visual theme/colors", "Changes the calculation method", "None"], a: 1, exp: "It applies visual themes (e.g., scheme(s2color))." },
+                { q: "Command for a bar chart of means?", options: ["graph bar (mean) var", "bar mean var", "chart bar var", "plot bar"], a: 0, exp: "<span class='code'>graph bar (mean) varname</span>." },
+                { q: "How do you remove the legend?", options: ["nolegend", "legend(off)", "clean", "drop legend"], a: 1, exp: "<span class='code'>legend(off)</span>." },
+                { q: "What is <span class='code'>kdensity</span> used for?", options: ["Kernel Density Plot", "Key Density", "Kilobyte Density", "None"], a: 0, exp: "It plots the Kernel Density (smooth histogram)." },
+                { q: "How do you manually set axis labels?", options: ["xlabel()", "labels()", "ticks()", "axis()"], a: 0, exp: "<span class='code'>xlabel(0(10)100)</span> sets labels from 0 to 100 in steps of 10." },
+                { q: "What does <span class='code'>jitter()</span> do in a scatterplot?", options: ["Shakes the window", "Adds random noise to points to separate overlaps", "Deletes outliers", "Smooths the line"], a: 1, exp: "Jitter helps visualize overlapping points." },
+                { q: "Which command allows interactive graph editing?", options: ["edit graph", "graph editor", "play", "All of the above"], a: 1, exp: "The Graph Editor (GUI) allows post-hoc changes." }
+            ]
+        },
+        // TEST 7: PROGRAMMING & MACROS
+        {
+            id: 7,
+            title: "Test 7: Programming & Macros",
+            questions: [
+                { q: "What defines a Local macro?", options: ["global name", "local name", "def name", "var name"], a: 1, exp: "<span class='code'>local</span> defines a macro for the current do-file." },
+                { q: "How do you reference a Local macro?", options: ["$name", "`name'", "@name", "#name"], a: 1, exp: "Backtick + name + apostrophe: <span class='code'>`name'</span>." },
+                { q: "How do you reference a Global macro?", options: ["$name", "`name'", "&name", "%name"], a: 0, exp: "Dollar sign: <span class='code'>$name</span>." },
+                { q: "Which loop iterates over a list of variables?", options: ["foreach x of varlist", "for x in vars", "loop vars", "while x"], a: 0, exp: "<span class='code'>foreach x of varlist ...</span>" },
+                { q: "Which loop iterates over numbers?", options: ["foreach num", "forvalues", "count", "iterate"], a: 1, exp: "<span class='code'>forvalues i = 1/10 { ... }</span>" },
+                { q: "What does <span class='code'>preserve</span> do?", options: ["Saves data to disk", "Keeps data in memory temporarily to restore later", "Locks the file", "Backs up the OS"], a: 1, exp: "It takes a snapshot of the data in memory." },
+                { q: "What must follow <span class='code'>preserve</span> later in the code?", options: ["return", "restore", "resume", "recover"], a: 1, exp: "<span class='code'>restore</span> brings the preserved data back." },
+                { q: "Where are results from 'summarize' stored?", options: ["e() class", "r() class", "s() class", "m() class"], a: 1, exp: "General commands store results in <span class='code'>r()</span> (return list)." },
+                { q: "Where are results from 'regress' stored?", options: ["e() class", "r() class", "s() class", "m() class"], a: 0, exp: "Estimation commands store results in <span class='code'>e()</span> (ereturn list)." },
+                { q: "How do you stop a do-file if an error occurs?", options: ["stop", "exit", "capture", "break"], a: 1, exp: "<span class='code'>exit</span> terminates the script (Stata does this by default on error)." },
+                { q: "What command ignores errors and continues?", options: ["ignore", "capture", "force", "skip"], a: 1, exp: "<span class='code'>capture command</span> suppresses errors." },
+                { q: "What is a 'tempfile'?", options: ["A file that deletes itself when the session ends", "A virus", "A permanent log", "A template"], a: 0, exp: "Tempfiles are automatically deleted when the do-file or session ends." },
+                { q: "How do you define a program in Stata?", options: ["program define name", "def program", "function name", "create prog"], a: 0, exp: "<span class='code'>program define</span> starts a program block." },
+                { q: "What does <span class='code'>set trace on</span> do?", options: ["Traces internet usage", "Debugs by showing every step of execution", "Draws a line", "None"], a: 1, exp: "It shows the detailed execution steps for debugging." },
+                { q: "How do you add comments in a do-file?", options: ["// or *", "#", "", "%"], a: 0, exp: "Stata uses <span class='code'>*</span> (start of line) or <span class='code'>//</span> (inline)." }
+            ]
+        },
+        // TEST 8: PANEL & SURVEY DATA
+        {
+            id: 8,
+            title: "Test 8: Panel & Survey Data",
+            questions: [
+                { q: "Command to declare Panel Data?", options: ["panel set", "xtset", "tsset", "pset"], a: 1, exp: "<span class='code'>xtset id_var time_var</span>." },
+                { q: "Command for Fixed Effects regression?", options: ["reg, fe", "xtreg, fe", "fixreg", "panel reg"], a: 1, exp: "<span class='code'>xtreg, fe</span>." },
+                { q: "Command for Random Effects regression?", options: ["xtreg, re", "reg, re", "randreg", "xtreg, random"], a: 0, exp: "<span class='code'>xtreg, re</span> (Random Effects is often the default)." },
+                { q: "Command to declare Survey Data design?", options: ["surveyset", "svyset", "design", "spset"], a: 1, exp: "<span class='code'>svyset</span> defines weights, strata, and PSU." },
+                { q: "How do you run a regression using survey weights?", options: ["reg y x, svy", "svy: reg y x", "weight: reg y x", "survey reg"], a: 1, exp: "Prefix the command with <span class='code'>svy:</span>." },
+                { q: "What is <span class='code'>xtdescribe</span>?", options: ["Describes panel patterns", "Describes text", "Describes variables", "None"], a: 0, exp: "Shows the participation pattern of panel data." },
+                { q: "What does <span class='code'>xtsum</span> do?", options: ["Sums variables", "Decomposes variance into between and within", "Sums time", "None"], a: 1, exp: "Shows Between and Within variation." },
+                { q: "Command for Time Series Line Plot?", options: ["line", "tsline", "timeplot", "xtplot"], a: 1, exp: "<span class='code'>tsline</span>." },
+                { q: "How do you create a lagged variable (previous year)?", options: ["gen lag = x[_n-1]", "L.x", "lag(x)", "prev(x)"], a: 1, exp: "The <span class='code'>L.</span> operator (e.g., L.gdp) works if xtset/tsset is defined." },
+                { q: "How do you create a 'difference' variable (current - previous)?", options: ["D.x", "diff(x)", "x - x_prev", "delta(x)"], a: 0, exp: "The <span class='code'>D.</span> operator calculates the difference." },
+                { q: "What is <span class='code'>hausman</span> used for?", options: ["Testing between FE and RE models", "Testing heteroskedasticity", "Testing autocorrelation", "None"], a: 0, exp: "The Hausman specification test." },
+                { q: "Command to check for stationarity (Unit Root)?", options: ["dfuller", "unitroot", "station", "checkstat"], a: 0, exp: "Dickey-Fuller test (<span class='code'>dfuller</span>)." },
+                { q: "What does <span class='code'>svy: mean</span> calculate?", options: ["Sample mean", "Population mean estimate using weights", "Weighted sum", "Geometric mean"], a: 1, exp: "Estimates population mean accounting for complex survey design." },
+                { q: "What is a PSU in survey data?", options: ["Primary Sampling Unit", "Personal Stata Unit", "Public Service User", "Post Stratification Unit"], a: 0, exp: "Primary Sampling Unit." },
+                { q: "What does <span class='code'>xtline</span> do?", options: ["Plots lines for each panel individual", "Plots one average line", "Plots time", "None"], a: 0, exp: "Plots time-series data for each cross-sectional unit." }
+            ]
+        },
+        // TEST 9: STRING MANIPULATION
+        {
+            id: 9,
+            title: "Test 9: String Manipulation",
+            questions: [
+                { q: "Function to extract part of a string?", options: ["part()", "substr()", "cut()", "extract()"], a: 1, exp: "<span class='code'>substr(string, start, length)</span>." },
+                { q: "Function to find the position of a character in a string?", options: ["find()", "strpos()", "index()", "locate()"], a: 1, exp: "<span class='code'>strpos(haystack, needle)</span>." },
+                { q: "Function to find length of a string?", options: ["len()", "length()", "strlen()", "count()"], a: 2, exp: "<span class='code'>strlen()</span> or just <span class='code'>length()</span> function." },
+                { q: "Function to convert string to uppercase?", options: ["upper()", "strupper()", "caps()", "u()"], a: 1, exp: "<span class='code'>strupper()</span>." },
+                { q: "Function to replace a specific word in a string?", options: ["subinstr()", "replace()", "swap()", "change()"], a: 0, exp: "<span class='code'>subinstr(string, old, new, count)</span>." },
+                { q: "Command to split a string variable into multiple variables?", options: ["separate", "split", "divide", "break"], a: 1, exp: "<span class='code'>split</span> divides a string based on spaces or delimiters." },
+                { q: "What does <span class='code'>regexm()</span> do?", options: ["Regular Expression Match", "Remove Text", "Register Macro", "None"], a: 0, exp: "Returns true if the string matches the pattern." },
+                { q: "How do you remove leading and trailing spaces?", options: ["clean()", "strtrim()", "trim()", "strip()"], a: 2, exp: "<span class='code'>trim()</span> removes surrounding spaces. <span class='code'>strtrim()</span> also exists." },
+                { q: "How to combine two string variables?", options: ["var1 + var2", "cat(var1, var2)", "merge(var1, var2)", "union(var1, var2)"], a: 0, exp: "The <span class='code'>+</span> operator concatenates strings." },
+                { q: "What does <span class='code'>word(string, 2)</span> return?", options: ["The 2nd letter", "The 2nd word", "The length", "Error"], a: 1, exp: "Returns the second word in the string." },
+                { q: "Convert number to string?", options: ["tostring", "string()", "num2str", "Both A and B"], a: 3, exp: "<span class='code'>tostring</span> (command) and <span class='code'>string()</span> (function) both work." },
+                { q: "Does Stata treat 'A' and 'a' as the same?", options: ["Yes", "No", "Sometimes", "Only in variable names"], a: 1, exp: "Strings are case-sensitive." },
+                { q: "How to browse only observations containing 'John'?", options: ["browse if John", "browse if strpos(name, 'John')", "browse name='John'", "browse search 'John'"], a: 1, exp: "<span class='code'>strpos</span> > 0 implies the substring exists." },
+                { q: "What does <span class='code'>strmatch()</span> do?", options: ["Matches exact string", "Matches using wildcards like *", "Matches regex", "Matches numbers"], a: 1, exp: "Supports wildcards (e.g., 'A*')." },
+                { q: "Function to remove multiple spaces between words?", options: ["stritrim()", "clean()", "compress()", "squash()"], a: 0, exp: "<span class='code'>stritrim()</span> reduces multiple internal spaces to one." }
+            ]
+        },
+        // TEST 10: ADVANCED CONCEPTS
+        {
+            id: 10,
+            title: "Test 10: Advanced Concepts",
+            questions: [
+                { q: "Which command installs user-written help files?", options: ["ssc install", "help install", "net install", "findit"], a: 0, exp: "<span class='code'>ssc install</span> typically includes help files." },
+                { q: "What does <span class='code'>levelsof var, local(m)</span> do?", options: ["Stores unique values in macro 'm'", "Graph levels", "Deletes levels", "Counts levels"], a: 0, exp: "Stores the list of unique values into a local macro." },
+                { q: "What is <span class='code'>matrix list M</span>?", options: ["Lists matrix M", "Deletes matrix M", "Inverts matrix M", "None"], a: 0, exp: "Displays the contents of a matrix." },
+                { q: "How do you access the coefficient of variable 'x' after reg?", options: ["_b[x]", "coef(x)", "beta(x)", "r(x)"], a: 0, exp: "<span class='code'>_b[varname]</span> holds the coefficient." },
+                { q: "How do you access the standard error of 'x'?", options: ["_se[x]", "stderr(x)", "sd(x)", "e(x)"], a: 0, exp: "<span class='code'>_se[varname]</span> holds the standard error." },
+                { q: "What does <span class='code'>quietly</span> do?", options: ["Runs command without output", "Runs command slowly", "Runs command in background", "Mutes sound"], a: 0, exp: "Suppresses terminal output." },
+                { q: "What is <span class='code'>noisily</span>?", options: ["Shows output even inside quietly blocks", "Makes a sound", "Shows errors only", "None"], a: 0, exp: "Forces output display." },
+                { q: "What is <span class='code'>by sort:</span> equivalent to?", options: ["bysort:", "sort, by:", "group:", "arrange:"], a: 0, exp: "<span class='code'>bysort:</span> is the shorthand for sort then by." },
+                { q: "What does <span class='code'>expand 2</span> do?", options: ["Doubles the dataset size (duplicates observations)", "Adds 2 variables", "Widens the screen", "None"], a: 0, exp: "Duplicates observations." },
+                { q: "What does <span class='code'>contract</span> do?", options: ["Replaces dataset with frequency counts of combinations", "Deletes variables", "Shrinks file size", "None"], a: 0, exp: "Opposite of expand; creates a dataset of frequencies." },
+                { q: "Command for instrumental variable regression?", options: ["ivregress", "instreg", "2sls", "reg_iv"], a: 0, exp: "<span class='code'>ivregress</span> (performs 2SLS, GMM, etc.)." },
+                { q: "What does <span class='code'>return list</span> show?", options: ["Saved results from general commands", "Saved results from estimation", "Variables", "Macros"], a: 0, exp: "Results from non-estimation commands (summarize, etc.)." },
+                { q: "What is the difference between <span class='code'>do</span> and <span class='code'>run</span>?", options: ["Do shows output, Run does not", "Run shows output, Do does not", "Do is faster", "Run is for functions"], a: 0, exp: "<span class='code'>do</span> echoes commands/output; <span class='code'>run</span> executes silently." },
+                { q: "How do you export a regression table to Word?", options: ["outreg2", "putdocx", "esttab", "All of the above"], a: 3, exp: "All are valid methods/packages." },
+                { q: "What does <span class='code'>rolling</span> do?", options: ["Rolling window statistics", "Rolls dice", "Scrolls screen", "Rotates data"], a: 0, exp: "Executes a command over a moving window of data." }
+            ]
+        }
+    ];
+
+    // --- LOGIC ---
+    
+    let currentTest = null;
+    let userAnswers = [];
+
+    // Initialize Menu
+    window.onload = function() {
+        const grid = document.getElementById('test-grid');
+        quizData.forEach((test, index) => {
+            const btn = document.createElement('div');
+            btn.className = 'test-btn';
+            btn.innerHTML = `<strong>${test.title}</strong><br><small>15 Questions</small>`;
+            btn.onclick = () => startQuiz(index);
+            grid.appendChild(btn);
+        });
+    };
+
+    function startQuiz(index) {
+        currentTest = quizData[index];
+        userAnswers = new Array(currentTest.questions.length).fill(null);
+        
+        // UI Switch
+        document.getElementById('menu-screen').style.display = 'none';
+        document.getElementById('results-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        window.scrollTo(0, 0);
+
+        // Load Content
+        document.getElementById('quiz-title').textContent = currentTest.title;
+        const container = document.getElementById('questions-container');
+        container.innerHTML = '';
+
+        currentTest.questions.forEach((q, qIndex) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            
+            let html = `<div class="question-text">${qIndex + 1}. ${q.q}</div><div class="options">`;
+            
+            q.options.forEach((opt, optIndex) => {
+                html += `
+                    <label class="option-label">
+                        <input type="radio" name="q${qIndex}" value="${optIndex}" onchange="recordAnswer(${qIndex}, ${optIndex})">
+                        ${opt}
+                    </label>
+                `;
+            });
+            
+            html += `</div>`;
+            card.innerHTML = html;
+            container.appendChild(card);
+        });
+    }
+
+    function recordAnswer(qIndex, ansIndex) {
+        userAnswers[qIndex] = ansIndex;
+    }
+
+    function submitQuiz() {
+        // Calculate Score
+        let score = 0;
+        const reviewContainer = document.getElementById('review-container');
+        reviewContainer.innerHTML = '';
+
+        currentTest.questions.forEach((q, index) => {
+            const userAns = userAnswers[index];
+            const isCorrect = userAns === q.a;
+            if (isCorrect) score++;
+
+            // Create Review Card
+            const reviewCard = document.createElement('div');
+            reviewCard.className = `review-card ${isCorrect ? 'correct' : 'incorrect'}`;
+            
+            const userAnsText = userAns !== null ? q.options[userAns] : "No Answer";
+            const correctAnsText = q.options[q.a];
+
+            reviewCard.innerHTML = `
+                <div><strong>Q${index + 1}: ${q.q}</strong></div>
+                <div style="margin: 5px 0; color: ${isCorrect ? 'green' : 'red'}">
+                    Your Answer: ${userAnsText} ${isCorrect ? '✅' : '❌'}
+                </div>
+                ${!isCorrect ? `<div style="color: green;">Correct Answer: ${correctAnsText}</div>` : ''}
+                <div class="explanation"><strong>Explanation:</strong> ${q.exp}</div>
+            `;
+            reviewContainer.appendChild(reviewCard);
+        });
+
+        // Show Results
+        document.getElementById('final-score').textContent = `${score} / ${currentTest.questions.length}`;
+        document.getElementById('score-percent').textContent = `${Math.round((score / currentTest.questions.length) * 100)}%`;
+
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('results-screen').style.display = 'block';
+        window.scrollTo(0, 0);
+    }
+
+    function goHome() {
+        document.getElementById('results-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('menu-screen').style.display = 'block';
+    }
+
+</script>
+
+</body>
+</html>
