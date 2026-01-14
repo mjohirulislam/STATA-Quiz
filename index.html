@@ -427,6 +427,28 @@
                 { q: "What does <span class='code'>rolling</span> do?", options: ["Rolling window statistics", "Rolls dice", "Scrolls screen", "Rotates data"], a: 0, exp: "Executes a command over a moving window of data." }
             ]
         }
+        // TEST 11: SURVIVAL ANALYSIS & FACTOR VARIABLES (The Missing Pieces)
+        {
+            id: 11,
+            title: "Test 11: Survival & Interactions",
+            questions: [
+                { q: "Which command declares data as survival-time data?", options: ["xtset", "tsset", "stset", "survset"], a: 2, exp: "<span class='code'>stset</span> declares survey design variables." },
+                { q: "What does <span class='code'>stcox</span> estimate?", options: ["Cox proportional hazards model", "Linear regression", "Logistic regression", "Kaplan-Meier curve"], a: 0, exp: "Fits a Cox proportional hazards model[cite: 69]." },
+                { q: "In <span class='code'>stset studytime, failure(died)</span>, what is 'died'?", options: ["The time variable", "The failure event (1=event, 0=censored)", "The ID variable", "The weight"], a: 1, exp: "It defines the failure event[cite: 67]." },
+                { q: "What does <span class='code'>sts graph</span> do?", options: ["Graphs the survivor function", "Graphs the hazard rate", "Graphs residuals", "Graphs time"], a: 0, exp: "Graphs the estimated survivor function (Kaplan-Meier)." },
+                { q: "How do you denote a categorical variable in a regression?", options: ["c.var", "i.var", "cat.var", "#var"], a: 1, exp: "<span class='code'>i.var</span> specifies indicators for categorical variables." },
+                { q: "How do you denote a continuous variable if you need to be explicit?", options: ["c.var", "i.var", "n.var", "cont.var"], a: 0, exp: "<span class='code'>c.var</span> treats the variable as continuous." },
+                { q: "What does <span class='code'>i.sex##c.age</span> create?", options: ["Two separate variables", "Interaction only", "Main effects and interaction (Factorial interaction)", "Error"], a: 2, exp: "<span class='code'>##</span> creates main effects (sex, age) AND the interaction term." },
+                { q: "What does <span class='code'>i.sex#c.age</span> create?", options: ["Main effects + interaction", "Interaction term ONLY", "Categorical age", "None"], a: 1, exp: "A single <span class='code'>#</span> specifies the interaction ONLY, without main effects." },
+                { q: "How do you set the base category for a factor variable (e.g., group 3)?", options: ["ib3.group", "base(3).group", "ref(3).group", "i.group, base(3)"], a: 0, exp: "<span class='code'>ib3.group</span> sets the 3rd category as the base/reference." },
+                { q: "What does <span class='code'>fvset base frequent var</span> do?", options: ["Sets base to 0", "Sets base to the most frequent category", "Sets base to the first category", "Errors out"], a: 1, exp: "Sets the base to the most frequently occurring category." },
+                { q: "What is <span class='code'>stsum</span> used for?", options: ["Summing time", "Summarizing survival-time data", "Standardizing time", "None"], a: 1, exp: "Summarizes survival-time data (incidence rates, median survival time)[cite: 68]." },
+                { q: "Which command fits an ARIMA model for time series?", options: ["regress", "arima", "tsreg", "forecast"], a: 1, exp: "Fits an autoregressive integrated moving average model[cite: 53]." },
+                { q: "What does <span class='code'>tsreport</span> do?", options: ["Reports time-series aspects (gaps) in dataset", "Reports regression results", "Reports summary stats", "Reports missing values"], a: 0, exp: "Reports time-series aspects like gaps in the time variable[cite: 46]." },
+                { q: "What symbol is used to omit a variable in factor notation?", options: ["o.var", "d.var", "x.var", "no.var"], a: 0, exp: "<span class='code'>o.var</span> specifies that the variable/indicator should be omitted." },
+                { q: "If you want to create a squared term in regression without generating a new variable?", options: ["age^2", "c.age#c.age", "sq(age)", "age*age"], a: 1, exp: "<span class='code'>c.age#c.age</span> creates a squared term on the fly." }
+            ]
+        }
     ];
 
     // --- LOGIC ---
